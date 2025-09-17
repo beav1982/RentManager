@@ -139,3 +139,9 @@ def test_end_to_end_workflow(client):
     issues = compliance_resp.json()
     assert any("Certification due" in issue["issue"] for issue in issues)
     assert any("exceeds limit" in issue["issue"] for issue in issues)
+
+
+def test_root_redirects_to_docs(client):
+    response = client.get("/", follow_redirects=False)
+    assert response.status_code == 307
+    assert response.headers["location"].endswith("/docs")
