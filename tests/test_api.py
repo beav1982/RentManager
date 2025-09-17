@@ -2,6 +2,35 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+from fastapi.testclient import TestClient
+from sqlmodel import Session
+
+from app.db import get_session
+from app.main import create_app
+
+
+def test_root_redirects_to_docs(client):
+    response = client.get("/", allow_redirects=False)
+    assert response.status_code == 307
+    assert response.headers["location"] == "http://testserver/docs"
+
+
+def test_root_redirect_respects_root_path(engine):
+    app = create_app()
+
+    def override_get_session():
+        with Session(engine) as session:
+            yield session
+
+    app.dependency_overrides[get_session] = override_get_session
+    with TestClient(app, root_path="/prefixed") as root_client:
+        response = root_client.get("/", allow_redirects=False)
+
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 307
+    assert response.headers["location"] == "http://testserver/prefixed/docs"
+
 
 def test_end_to_end_workflow(client):
     today = date.today()
