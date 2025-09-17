@@ -10,9 +10,10 @@ from app.main import create_app
 
 
 def test_root_redirects_to_docs(client):
-    response = client.get("/", allow_redirects=False)
+    response = client.get("/", follow_redirects=False)
     assert response.status_code == 307
-    assert response.headers["location"] == "http://testserver/docs"
+    expected_docs_url = str(client.base_url.join("/docs"))
+    assert response.headers["location"] == expected_docs_url
 
 
 def test_root_redirect_respects_root_path(engine):
@@ -23,13 +24,15 @@ def test_root_redirect_respects_root_path(engine):
             yield session
 
     app.dependency_overrides[get_session] = override_get_session
-    with TestClient(app, root_path="/prefixed") as root_client:
-        response = root_client.get("/", allow_redirects=False)
+    root_path = "/prefixed"
+    with TestClient(app, root_path=root_path) as root_client:
+        response = root_client.get("/", follow_redirects=False)
+        expected_docs_url = str(root_client.base_url.join(f"{root_path}/docs"))
 
     app.dependency_overrides.clear()
 
     assert response.status_code == 307
-    assert response.headers["location"] == "http://testserver/prefixed/docs"
+    assert response.headers["location"] == expected_docs_url
 
 
 def test_end_to_end_workflow(client):
