@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import RedirectResponse
 
 from .db import init_db
 from .routers import (
@@ -37,6 +38,11 @@ def create_app() -> FastAPI:
     app.include_router(compliance.router, prefix="/compliance", tags=["compliance"])
     app.include_router(reports.router, prefix="/reports", tags=["reports"])
     app.include_router(transactions.router, prefix="/transactions", tags=["transactions"])
+
+    @app.get("/", include_in_schema=False)
+    def root(request: Request) -> RedirectResponse:
+        redirect_target = request.url_for("swagger_ui_html")
+        return RedirectResponse(url=redirect_target, status_code=307)
 
     @app.get("/health", tags=["monitoring"])
     def healthcheck() -> dict[str, str]:
