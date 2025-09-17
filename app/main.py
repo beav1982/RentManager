@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 
 from .db import init_db
 from .routers import (
@@ -29,6 +30,10 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     def _startup() -> None:
         init_db()
+
+    @app.get("/", include_in_schema=False)
+    def root() -> RedirectResponse:
+        return RedirectResponse(url="/docs", status_code=307)
 
     app.include_router(properties.router, prefix="/properties", tags=["properties"])
     app.include_router(units.router, prefix="/units", tags=["units"])
