@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, status
+from fastapi.responses import RedirectResponse
 
 from .db import init_db
 from .routers import (
@@ -31,12 +32,8 @@ def create_app() -> FastAPI:
         init_db()
 
     @app.get("/", include_in_schema=False)
-    def root() -> dict[str, str]:
-        return {
-            "status": "available",
-            "docs_url": "/docs",
-            "message": "Visit the interactive API docs at /docs",
-        }
+    def root() -> RedirectResponse:
+        return RedirectResponse(url="/docs", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
     app.include_router(properties.router, prefix="/properties", tags=["properties"])
     app.include_router(units.router, prefix="/units", tags=["units"])
