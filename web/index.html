@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RentManager Operations Console</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #111c33;
+        --panel-alt: #13203c;
+        --border: rgba(148, 163, 184, 0.2);
+        --accent: #38bdf8;
+        --accent-strong: #0ea5e9;
+        --text: #e2e8f0;
+        --text-dim: #94a3b8;
+        --success: #22c55e;
+        --danger: #ef4444;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: radial-gradient(circle at top left, #1e293b, #0f172a 55%);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        padding: 32px 24px 48px;
+      }
+
+      .app-shell {
+        width: min(1100px, 100%);
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      header.top-bar {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(56, 189, 248, 0.05));
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 24px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 24px;
+        align-items: center;
+      }
+
+      .branding {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .branding .logo {
+        background: rgba(14, 165, 233, 0.15);
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        font-size: 0.95rem;
+      }
+
+      .branding h1 {
+        margin: 0;
+        font-size: 1.6rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+
+      .branding p {
+        margin: 4px 0 0;
+        color: var(--text-dim);
+        font-size: 0.9rem;
+      }
+
+      .top-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 12px;
+      }
+
+      .search-field {
+        position: relative;
+        flex: 1 1 220px;
+      }
+
+      .search-field input[type="search"] {
+        width: 100%;
+        padding: 12px 14px 12px 40px;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        background: rgba(15, 23, 42, 0.8);
+        color: var(--text);
+        font-size: 0.95rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .search-field input[type="search"]:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+      }
+
+      .search-field svg {
+        position: absolute;
+        top: 12px;
+        left: 14px;
+        width: 16px;
+        height: 16px;
+        fill: var(--text-dim);
+      }
+
+      select.filter-select {
+        appearance: none;
+        background: rgba(15, 23, 42, 0.8);
+        color: var(--text);
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        border-radius: 12px;
+        padding: 12px 40px 12px 14px;
+        font-size: 0.95rem;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%2394a3b8" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4z"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        min-width: 160px;
+      }
+
+      button {
+        border: none;
+        border-radius: 12px;
+        padding: 12px 18px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      .ghost {
+        background: rgba(30, 41, 59, 0.75);
+        color: var(--text);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+      }
+
+      .primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        color: #0f172a;
+        box-shadow: 0 12px 20px -12px rgba(14, 165, 233, 0.65);
+      }
+
+      main.layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 24px;
+      }
+
+      @media (max-width: 960px) {
+        header.top-bar {
+          grid-template-columns: 1fr;
+        }
+
+        main.layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .summary-panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        min-height: 320px;
+      }
+
+      .summary-panel h2 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+
+      .summary-panel p {
+        margin: 0;
+        color: var(--text-dim);
+        font-size: 0.9rem;
+      }
+
+      .stat-grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .stat-card {
+        background: var(--panel-alt);
+        border-radius: 16px;
+        padding: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.1);
+      }
+
+      .stat-card span.label {
+        color: var(--text-dim);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .stat-card strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 1.6rem;
+        font-weight: 600;
+      }
+
+      .stat-card small {
+        display: block;
+        margin-top: 6px;
+        color: rgba(148, 163, 184, 0.7);
+        font-size: 0.8rem;
+      }
+
+      .table-panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        min-height: 520px;
+      }
+
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .panel-header h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .panel-header p {
+        margin: 4px 0 0;
+        color: var(--text-dim);
+        font-size: 0.9rem;
+      }
+
+      .table-status {
+        color: var(--text-dim);
+        font-size: 0.85rem;
+      }
+
+      .table-wrapper {
+        margin-top: 20px;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid rgba(148, 163, 184, 0.1);
+        background: rgba(15, 23, 42, 0.55);
+        flex: 1 1 auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        color: var(--text);
+      }
+
+      thead {
+        background: rgba(15, 23, 42, 0.8);
+      }
+
+      th,
+      td {
+        padding: 14px 16px;
+        text-align: left;
+        font-size: 0.9rem;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+      }
+
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      tbody tr:hover {
+        background: rgba(148, 163, 184, 0.05);
+      }
+
+      td.actions {
+        width: 140px;
+      }
+
+      td.actions button {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        border-radius: 10px;
+      }
+
+      td.actions button + button {
+        margin-left: 8px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        background: rgba(56, 189, 248, 0.2);
+        color: var(--accent);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 24px;
+        color: var(--text-dim);
+        font-size: 0.95rem;
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(15, 23, 42, 0.65);
+        backdrop-filter: blur(6px);
+        z-index: 20;
+      }
+
+      .modal.hidden {
+        display: none;
+      }
+
+      .modal-dialog {
+        background: #0b1223;
+        border-radius: 20px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        padding: 28px;
+        width: min(520px, 100%);
+        box-shadow: 0 40px 80px -40px rgba(15, 23, 42, 0.8);
+        position: relative;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .modal-header button {
+        background: transparent;
+        border: none;
+        color: var(--text-dim);
+        padding: 6px;
+        cursor: pointer;
+        border-radius: 8px;
+      }
+
+      .modal-header button:hover {
+        background: rgba(148, 163, 184, 0.1);
+      }
+
+      form.property-form {
+        display: grid;
+        gap: 16px;
+        margin-top: 20px;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      @media (max-width: 720px) {
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 0.85rem;
+        color: var(--text-dim);
+      }
+
+      label span {
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      select,
+      input[type="date"] {
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        background: rgba(15, 23, 42, 0.8);
+        color: var(--text);
+        padding: 12px 14px;
+        font-size: 0.95rem;
+      }
+
+      input[type="text"]:focus,
+      input[type="number"]:focus,
+      select:focus,
+      input[type="date"]:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+      }
+
+      .modal-actions {
+        margin-top: 12px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+      }
+
+      .modal-actions .danger {
+        background: rgba(239, 68, 68, 0.18);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.4);
+      }
+
+      .toast-container {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        display: grid;
+        gap: 12px;
+        z-index: 40;
+      }
+
+      .toast {
+        min-width: 220px;
+        background: rgba(15, 23, 42, 0.95);
+        border-radius: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        padding: 14px 16px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 20px 45px -30px rgba(15, 23, 42, 0.9);
+        transition: opacity 0.35s ease, transform 0.35s ease;
+      }
+
+      .toast.success {
+        border-color: rgba(34, 197, 94, 0.6);
+        color: #bbf7d0;
+      }
+
+      .toast.error {
+        border-color: rgba(239, 68, 68, 0.6);
+        color: #fecaca;
+      }
+
+      .toast::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      .toast.success::before {
+        background: var(--success);
+      }
+
+      .toast.error::before {
+        background: var(--danger);
+      }
+
+      .toast.hide {
+        transform: translateY(8px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="top-bar">
+        <div class="branding">
+          <div class="logo">RM</div>
+          <div>
+            <h1>RentManager</h1>
+            <p>Operations console for affordable housing portfolios</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <div class="search-field">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27a6 6 0 10-.71.71l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0A4.5 4.5 0 119 5a4.5 4.5 0 01.5 9z" /></svg>
+            <input
+              id="searchInput"
+              type="search"
+              placeholder="Search by property name, code, city, or manager"
+              autocomplete="off"
+            />
+          </div>
+          <select id="typeFilter" class="filter-select" aria-label="Filter by property type">
+            <option value="all">All property types</option>
+            <option value="Affordable">Affordable</option>
+            <option value="Market">Market</option>
+            <option value="Supportive">Supportive</option>
+            <option value="Senior">Senior</option>
+          </select>
+          <button id="refreshBtn" class="ghost">Refresh data</button>
+          <button id="addPropertyBtn" class="primary">New property</button>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="summary-panel">
+          <div>
+            <h2>Portfolio snapshot</h2>
+            <p>Live totals update with your filters.</p>
+          </div>
+          <div class="stat-grid">
+            <article class="stat-card">
+              <span class="label">Total properties</span>
+              <strong id="totalProperties">0</strong>
+              <small id="portfolioCoverage">—</small>
+            </article>
+            <article class="stat-card">
+              <span class="label">Total units</span>
+              <strong id="totalUnits">0</strong>
+              <small>Summed across the filtered list.</small>
+            </article>
+            <article class="stat-card">
+              <span class="label">Affordable share</span>
+              <strong id="affordableShare">0%</strong>
+              <small>Percentage flagged as affordable or tax credit.</small>
+            </article>
+            <article class="stat-card">
+              <span class="label">Active managers</span>
+              <strong id="activeManagers">0</strong>
+              <small>Unique managers assigned to filtered properties.</small>
+            </article>
+          </div>
+        </aside>
+
+        <section class="table-panel" aria-live="polite">
+          <div class="panel-header">
+            <div>
+              <h2>Property directory</h2>
+              <p>Track asset basics and coordinate compliance follow-up.</p>
+            </div>
+            <span class="table-status" id="tableStatus">Loading…</span>
+          </div>
+          <div class="table-wrapper">
+            <table aria-describedby="tableStatus">
+              <thead>
+                <tr>
+                  <th scope="col">Property</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Address</th>
+                  <th scope="col">Units</th>
+                  <th scope="col">Manager</th>
+                  <th scope="col" class="actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="propertyTableBody">
+                <tr>
+                  <td colspan="6" class="empty-state">Loading portfolio…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal hidden" id="propertyModal" role="dialog" aria-modal="true" aria-labelledby="propertyModalTitle">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="propertyModalTitle">New property</h3>
+          <button type="button" data-action="close-property" aria-label="Close">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+              <path d="M18.3 5.71L12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.3 19.71 2.89 18.3 9.18 12 2.89 5.71 4.3 4.29l6.29 6.3 6.3-6.3z" />
+            </svg>
+          </button>
+        </div>
+        <form class="property-form" id="propertyForm">
+          <input type="hidden" id="propertyId" />
+          <div class="form-grid">
+            <label>
+              <span>Name</span>
+              <input id="nameInput" type="text" name="name" placeholder="e.g. Sunrise Homes" required maxlength="120" />
+            </label>
+            <label>
+              <span>Code</span>
+              <input id="codeInput" type="text" name="code" placeholder="e.g. SUN01" required maxlength="20" />
+            </label>
+            <label>
+              <span>Type</span>
+              <select id="typeInput" name="type">
+                <option value="Affordable">Affordable</option>
+                <option value="Market">Market</option>
+                <option value="Supportive">Supportive</option>
+                <option value="Senior">Senior</option>
+                <option value="Mixed Income">Mixed Income</option>
+              </select>
+            </label>
+            <label>
+              <span>Total units</span>
+              <input id="unitsInput" type="number" name="total_units" min="0" step="1" placeholder="e.g. 85" />
+            </label>
+            <label>
+              <span>Address line 1</span>
+              <input id="addressInput" type="text" name="address_line1" placeholder="Street address" required maxlength="160" />
+            </label>
+            <label>
+              <span>City</span>
+              <input id="cityInput" type="text" name="city" placeholder="City" required maxlength="80" />
+            </label>
+            <label>
+              <span>State</span>
+              <input id="stateInput" type="text" name="state" placeholder="State" required maxlength="2" />
+            </label>
+            <label>
+              <span>Postal code</span>
+              <input id="postalInput" type="text" name="postal_code" placeholder="ZIP" required maxlength="12" />
+            </label>
+            <label>
+              <span>Property manager</span>
+              <input id="managerInput" type="text" name="property_manager" placeholder="Manager name" maxlength="80" />
+            </label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="ghost" data-action="close-property">Cancel</button>
+            <button type="submit" class="primary" id="propertySubmitBtn">Save property</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal hidden" id="confirmModal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 id="confirmTitle">Delete property</h3>
+        </div>
+        <p id="confirmMessage" style="color: var(--text-dim); margin: 16px 0 24px;">
+          Are you sure you want to delete this property?
+        </p>
+        <div class="modal-actions">
+          <button type="button" class="ghost" data-action="close-confirm">Cancel</button>
+          <button type="button" class="danger" id="confirmDeleteBtn">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer" aria-live="assertive" aria-atomic="true"></div>
+
+    <script>
+      const API_BASE = "http://127.0.0.1:8000";
+      const state = {
+        properties: [],
+        filters: {
+          search: "",
+          type: "all",
+        },
+        editingId: null,
+        deleteTarget: null,
+      };
+
+      const elements = {};
+
+      document.addEventListener("DOMContentLoaded", () => {
+        elements.tableBody = document.getElementById("propertyTableBody");
+        elements.tableStatus = document.getElementById("tableStatus");
+        elements.totalProperties = document.getElementById("totalProperties");
+        elements.totalUnits = document.getElementById("totalUnits");
+        elements.affordableShare = document.getElementById("affordableShare");
+        elements.activeManagers = document.getElementById("activeManagers");
+        elements.portfolioCoverage = document.getElementById("portfolioCoverage");
+        elements.searchInput = document.getElementById("searchInput");
+        elements.typeFilter = document.getElementById("typeFilter");
+        elements.propertyModal = document.getElementById("propertyModal");
+        elements.confirmModal = document.getElementById("confirmModal");
+        elements.propertyForm = document.getElementById("propertyForm");
+        elements.propertySubmitBtn = document.getElementById("propertySubmitBtn");
+        elements.toastContainer = document.getElementById("toastContainer");
+        elements.propertyModalTitle = document.getElementById("propertyModalTitle");
+        elements.propertyId = document.getElementById("propertyId");
+        elements.confirmMessage = document.getElementById("confirmMessage");
+
+        document.getElementById("addPropertyBtn").addEventListener("click", () =>
+          openPropertyModal()
+        );
+        document.getElementById("refreshBtn").addEventListener("click", () =>
+          loadProperties(true)
+        );
+        elements.searchInput.addEventListener("input", () => {
+          state.filters.search = elements.searchInput.value.trim();
+          applyFilters();
+        });
+        elements.typeFilter.addEventListener("change", () => {
+          state.filters.type = elements.typeFilter.value;
+          applyFilters();
+        });
+
+        elements.propertyForm.addEventListener("submit", submitPropertyForm);
+
+        elements.propertyModal.addEventListener("click", (event) => {
+          if (event.target.dataset.action === "close-property" || event.target === event.currentTarget) {
+            closePropertyModal();
+          }
+        });
+
+        elements.confirmModal.addEventListener("click", (event) => {
+          if (event.target.dataset.action === "close-confirm" || event.target === event.currentTarget) {
+            closeConfirmModal();
+          }
+        });
+
+        document.getElementById("confirmDeleteBtn").addEventListener("click", performDelete);
+
+        elements.tableBody.addEventListener("click", (event) => {
+          const editBtn = event.target.closest("button[data-action='edit']");
+          const deleteBtn = event.target.closest("button[data-action='delete']");
+          if (editBtn) {
+            const id = Number.parseInt(editBtn.dataset.id, 10);
+            const property = state.properties.find((item) => item.id === id);
+            if (property) {
+              openPropertyModal(property);
+            }
+          }
+          if (deleteBtn) {
+            const id = Number.parseInt(deleteBtn.dataset.id, 10);
+            const property = state.properties.find((item) => item.id === id);
+            if (property) {
+              openConfirmModal(property);
+            }
+          }
+        });
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") {
+            if (!elements.propertyModal.classList.contains("hidden")) {
+              closePropertyModal();
+            } else if (!elements.confirmModal.classList.contains("hidden")) {
+              closeConfirmModal();
+            }
+          }
+        });
+
+        loadProperties();
+      });
+
+      async function loadProperties(showToast = false) {
+        elements.tableStatus.textContent = "Loading…";
+        try {
+          const response = await fetch(`${API_BASE}/properties/`);
+          if (!response.ok) {
+            throw new Error("Unable to load properties");
+          }
+          const data = await response.json();
+          state.properties = Array.isArray(data) ? data : [];
+          updateTypeFilter();
+          applyFilters();
+          if (showToast) {
+            showToast("Portfolio data refreshed", "success");
+          }
+        } catch (error) {
+          console.error(error);
+          showToast(error.message || "Failed to load properties", "error");
+          elements.tableStatus.textContent = "Could not load data";
+          elements.tableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="empty-state">We couldn't load properties from the API.</td>
+            </tr>`;
+        }
+      }
+
+      function updateTypeFilter() {
+        const select = elements.typeFilter;
+        const current = select.value;
+        const fragment = document.createDocumentFragment();
+        const baseOption = document.createElement("option");
+        baseOption.value = "all";
+        baseOption.textContent = "All property types";
+        fragment.appendChild(baseOption);
+        const types = Array.from(
+          new Set(
+            state.properties
+              .map((item) => (item.type || "").trim())
+              .filter((value) => value.length > 0)
+          )
+        ).sort((a, b) => a.localeCompare(b));
+        types.forEach((type) => {
+          const option = document.createElement("option");
+          option.value = type;
+          option.textContent = type;
+          fragment.appendChild(option);
+        });
+        select.innerHTML = "";
+        select.appendChild(fragment);
+        if (types.includes(current)) {
+          select.value = current;
+        } else {
+          select.value = "all";
+          state.filters.type = "all";
+        }
+      }
+
+      function applyFilters() {
+        const query = state.filters.search.toLowerCase();
+        const typeFilter = state.filters.type;
+        const filtered = state.properties.filter((property) => {
+          const matchesType =
+            typeFilter === "all" || (property.type || "").toLowerCase() === typeFilter.toLowerCase();
+          const content = `${property.name || ""} ${property.code || ""} ${property.city || ""} ${
+            property.property_manager || ""
+          }`.toLowerCase();
+          const matchesQuery = query.length === 0 || content.includes(query);
+          return matchesType && matchesQuery;
+        });
+        renderProperties(filtered);
+        renderSummary(filtered);
+        const total = state.properties.length;
+        const filteredCount = filtered.length;
+        elements.tableStatus.textContent = total
+          ? `Showing ${filteredCount} of ${total} properties`
+          : "No properties available";
+      }
+
+      function renderProperties(list) {
+        if (!list.length) {
+          elements.tableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="empty-state">No properties match the current filters.</td>
+            </tr>`;
+          return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        list.forEach((property) => {
+          const row = document.createElement("tr");
+
+          const propertyCell = document.createElement("td");
+          const name = document.createElement("div");
+          name.textContent = property.name || "Untitled property";
+          name.style.fontWeight = "600";
+          const code = document.createElement("div");
+          code.className = "badge";
+          code.textContent = property.code || "—";
+          propertyCell.appendChild(name);
+          propertyCell.appendChild(code);
+          row.appendChild(propertyCell);
+
+          const typeCell = document.createElement("td");
+          typeCell.textContent = property.type || "—";
+          row.appendChild(typeCell);
+
+          const addressCell = document.createElement("td");
+          const addressParts = [property.address_line1, property.city, property.state, property.postal_code]
+            .map((value) => (value || "").trim())
+            .filter((value) => value.length > 0);
+          addressCell.textContent = addressParts.join(", ") || "—";
+          row.appendChild(addressCell);
+
+          const unitsCell = document.createElement("td");
+          const unitsValue = Number(property.total_units);
+          unitsCell.textContent = Number.isFinite(unitsValue)
+            ? unitsValue.toLocaleString()
+            : "—";
+          row.appendChild(unitsCell);
+
+          const managerCell = document.createElement("td");
+          managerCell.textContent = property.property_manager || "—";
+          row.appendChild(managerCell);
+
+          const actionCell = document.createElement("td");
+          actionCell.className = "actions";
+          const editButton = document.createElement("button");
+          editButton.className = "ghost";
+          editButton.dataset.action = "edit";
+          editButton.dataset.id = String(property.id);
+          editButton.textContent = "Edit";
+          const deleteButton = document.createElement("button");
+          deleteButton.className = "danger";
+          deleteButton.dataset.action = "delete";
+          deleteButton.dataset.id = String(property.id);
+          deleteButton.textContent = "Delete";
+          actionCell.appendChild(editButton);
+          actionCell.appendChild(deleteButton);
+          row.appendChild(actionCell);
+
+          fragment.appendChild(row);
+        });
+        elements.tableBody.innerHTML = "";
+        elements.tableBody.appendChild(fragment);
+      }
+
+      function renderSummary(list) {
+        const total = list.length;
+        const totalUnits = list.reduce((sum, property) => {
+          const value = Number(property.total_units);
+          return sum + (Number.isFinite(value) ? value : 0);
+        }, 0);
+        const affordable = list.filter((property) => {
+          const type = (property.type || "").toLowerCase();
+          return type.includes("afford") || type.includes("tax") || type.includes("lih");
+        }).length;
+        const managers = new Set(
+          list
+            .map((property) => (property.property_manager || "").trim())
+            .filter((value) => value.length > 0)
+        );
+
+        elements.totalProperties.textContent = String(total);
+        elements.totalUnits.textContent = totalUnits.toLocaleString();
+        elements.affordableShare.textContent = total
+          ? `${Math.round((affordable / total) * 100)}%`
+          : "0%";
+        elements.activeManagers.textContent = String(managers.size);
+        const overallTotal = state.properties.length;
+        elements.portfolioCoverage.textContent = overallTotal
+          ? `Filtered view covers ${(total / overallTotal * 100 || 0).toFixed(0)}% of the portfolio`
+          : "No properties available";
+      }
+
+      function openPropertyModal(property) {
+        state.editingId = property ? property.id : null;
+        if (property) {
+          elements.propertyModalTitle.textContent = "Edit property";
+          elements.propertySubmitBtn.textContent = "Update property";
+        } else {
+          elements.propertyModalTitle.textContent = "New property";
+          elements.propertySubmitBtn.textContent = "Save property";
+        }
+        elements.propertyId.value = property ? property.id : "";
+        document.getElementById("nameInput").value = property?.name ?? "";
+        document.getElementById("codeInput").value = property?.code ?? "";
+        const typeSelect = document.getElementById("typeInput");
+        const typeValue = property?.type ?? "Affordable";
+        const hasOption = Array.from(typeSelect.options).some(
+          (option) => option.value === typeValue
+        );
+        if (!hasOption) {
+          const option = document.createElement("option");
+          option.value = typeValue;
+          option.textContent = typeValue;
+          typeSelect.appendChild(option);
+        }
+        typeSelect.value = typeValue;
+        document.getElementById("unitsInput").value = property?.total_units ?? "";
+        document.getElementById("addressInput").value = property?.address_line1 ?? "";
+        document.getElementById("cityInput").value = property?.city ?? "";
+        document.getElementById("stateInput").value = property?.state ?? "";
+        document.getElementById("postalInput").value = property?.postal_code ?? "";
+        document.getElementById("managerInput").value = property?.property_manager ?? "";
+        elements.propertyModal.classList.remove("hidden");
+        setTimeout(() => {
+          document.getElementById("nameInput").focus();
+        }, 50);
+      }
+
+      function closePropertyModal() {
+        elements.propertyModal.classList.add("hidden");
+        elements.propertyForm.reset();
+        state.editingId = null;
+        elements.propertySubmitBtn.textContent = "Save property";
+        elements.propertySubmitBtn.disabled = false;
+      }
+
+      function openConfirmModal(property) {
+        state.deleteTarget = property;
+        elements.confirmMessage.textContent = `Delete ${property.name || "this property"}? This action cannot be undone.`;
+        elements.confirmModal.classList.remove("hidden");
+      }
+
+      function closeConfirmModal() {
+        elements.confirmModal.classList.add("hidden");
+        state.deleteTarget = null;
+      }
+
+      async function submitPropertyForm(event) {
+        event.preventDefault();
+        const form = event.target;
+        const payload = collectFormPayload(form);
+        const id = state.editingId;
+        const url = id ? `${API_BASE}/properties/${id}` : `${API_BASE}/properties/`;
+        const method = id ? "PUT" : "POST";
+
+        const editing = Boolean(id);
+        elements.propertySubmitBtn.disabled = true;
+        elements.propertySubmitBtn.textContent = editing ? "Updating…" : "Saving…";
+
+        try {
+          const response = await fetch(url, {
+            method,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            const errorPayload = await safeJson(response);
+            const detail = (errorPayload && errorPayload.detail) || response.statusText;
+            throw new Error(detail || "Unable to save property");
+          }
+
+          await response.json();
+          closePropertyModal();
+          showToast(editing ? "Property updated" : "Property created", "success");
+          await loadProperties();
+        } catch (error) {
+          console.error(error);
+          showToast(error.message || "Unable to save property", "error");
+        } finally {
+          elements.propertySubmitBtn.disabled = false;
+          elements.propertySubmitBtn.textContent = editing ? "Update property" : "Save property";
+        }
+      }
+
+      function collectFormPayload(form) {
+        const formData = new FormData(form);
+        const payload = {};
+        formData.forEach((value, key) => {
+          if (typeof value === "string") {
+            const trimmed = value.trim();
+            payload[key] = trimmed.length > 0 ? trimmed : null;
+          } else {
+            payload[key] = value;
+          }
+        });
+        if (payload.total_units !== null && payload.total_units !== undefined) {
+          const numeric = Number(payload.total_units);
+          payload.total_units = Number.isFinite(numeric) ? numeric : null;
+        }
+        if (payload.state) {
+          payload.state = payload.state.toUpperCase();
+        }
+        return payload;
+      }
+
+      async function performDelete() {
+        if (!state.deleteTarget) {
+          return;
+        }
+        const { id, name } = state.deleteTarget;
+        try {
+          const response = await fetch(`${API_BASE}/properties/${id}`, {
+            method: "DELETE",
+          });
+          if (!response.ok) {
+            const errorPayload = await safeJson(response);
+            const detail = (errorPayload && errorPayload.detail) || response.statusText;
+            throw new Error(detail || "Unable to delete property");
+          }
+          closeConfirmModal();
+          showToast(`Deleted ${name || "property"}`, "success");
+          state.properties = state.properties.filter((property) => property.id !== id);
+          applyFilters();
+        } catch (error) {
+          console.error(error);
+          showToast(error.message || "Unable to delete property", "error");
+        }
+      }
+
+      async function safeJson(response) {
+        try {
+          return await response.json();
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function showToast(message, type = "info") {
+        const toast = document.createElement("div");
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        elements.toastContainer.appendChild(toast);
+        setTimeout(() => {
+          toast.classList.add("hide");
+          toast.style.opacity = "0";
+        }, 3800);
+        setTimeout(() => {
+          toast.remove();
+        }, 4500);
+      }
+    </script>
+  </body>
+</html>

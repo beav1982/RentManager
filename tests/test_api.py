@@ -139,3 +139,39 @@ def test_end_to_end_workflow(client):
     issues = compliance_resp.json()
     assert any("Certification due" in issue["issue"] for issue in issues)
     assert any("exceeds limit" in issue["issue"] for issue in issues)
+
+
+def test_property_update_and_delete(client):
+    payload = {
+        "name": "Harbor View",
+        "code": "HBV01",
+        "address_line1": "10 Waterfront Way",
+        "city": "Seattle",
+        "state": "WA",
+        "postal_code": "98101",
+        "total_units": 85,
+        "property_manager": "Taylor Reed",
+    }
+    create_resp = client.post("/properties/", json=payload)
+    assert create_resp.status_code == 201
+    property_id = create_resp.json()["id"]
+
+    update_resp = client.put(
+        f"/properties/{property_id}",
+        json={
+            "name": "Harbor View East",
+            "code": "HBV02",
+            "total_units": 90,
+        },
+    )
+    assert update_resp.status_code == 200
+    updated = update_resp.json()
+    assert updated["name"] == "Harbor View East"
+    assert updated["code"] == "HBV02"
+    assert updated["total_units"] == 90
+
+    delete_resp = client.delete(f"/properties/{property_id}")
+    assert delete_resp.status_code == 204
+
+    get_resp = client.get(f"/properties/{property_id}")
+    assert get_resp.status_code == 404
