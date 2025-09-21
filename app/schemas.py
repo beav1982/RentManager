@@ -31,6 +31,18 @@ class PropertyRead(PropertyBase):
         orm_mode = True
 
 
+class PropertyUpdate(BaseModel):
+    name: str | None = None
+    code: str | None = None
+    type: str | None = None
+    address_line1: str | None = None
+    city: str | None = None
+    state: str | None = None
+    postal_code: str | None = None
+    total_units: int | None = None
+    property_manager: str | None = None
+
+
 class UnitBase(BaseModel):
     property_id: int
     number: str

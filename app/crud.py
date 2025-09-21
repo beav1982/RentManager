@@ -21,6 +21,24 @@ def list_properties(session: Session) -> List[models.Property]:
     return session.exec(select(models.Property)).all()
 
 
+def update_property(
+    session: Session,
+    property_obj: models.Property,
+    updates: dict[str, object],
+) -> models.Property:
+    for key, value in updates.items():
+        setattr(property_obj, key, value)
+    session.add(property_obj)
+    session.commit()
+    session.refresh(property_obj)
+    return property_obj
+
+
+def delete_property(session: Session, property_obj: models.Property) -> None:
+    session.delete(property_obj)
+    session.commit()
+
+
 def create_unit(session: Session, unit_in: models.Unit) -> models.Unit:
     session.add(unit_in)
     session.commit()
