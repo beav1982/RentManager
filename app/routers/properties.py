@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlmodel import Session, select
 
 from .. import crud, models, schemas
@@ -36,3 +36,38 @@ def get_property(property_id: int, session: Session = Depends(get_session)) -> s
     if property_ is None:
         raise HTTPException(status_code=404, detail="Property not found")
     return property_
+
+
+@router.put("/{property_id}", response_model=schemas.PropertyRead)
+def update_property(
+    property_id: int,
+    payload: schemas.PropertyUpdate,
+    session: Session = Depends(get_session),
+) -> schemas.PropertyRead:
+    property_ = session.get(models.Property, property_id)
+    if property_ is None:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    updates = payload.dict(exclude_unset=True)
+    if "code" in updates and updates["code"] != property_.code:
+        existing = session.exec(
+            select(models.Property).where(
+                models.Property.code == updates["code"],
+                models.Property.id != property_id,
+            )
+        ).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Property code already exists")
+
+    return crud.update_property(session, property_, updates)
+
+
+@router.delete("/{property_id}", status_code=204)
+def delete_property(
+    property_id: int, session: Session = Depends(get_session)
+) -> Response:
+    property_ = session.get(models.Property, property_id)
+    if property_ is None:
+        raise HTTPException(status_code=404, detail="Property not found")
+    crud.delete_property(session, property_)
+    return Response(status_code=204)
