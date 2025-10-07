@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RentManager Property Console</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --surface: #ffffff;
+        --surface-alt: #f3f4f6;
+        --surface-muted: #e5e7eb;
+        --border: #d1d5db;
+        --text: #1f2933;
+        --text-muted: #52606d;
+        --accent: #2563eb;
+        --accent-dark: #1d4ed8;
+        --danger: #dc2626;
+        --danger-dark: #b91c1c;
+        --success: #047857;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background-color: #f8fafc;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--surface-alt);
+        color: var(--text);
+      }
+
+      body.modal-open {
+        overflow: hidden;
+      }
+
+      .page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      header {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 1.25rem clamp(1rem, 4vw, 2.5rem);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: clamp(1.25rem, 3vw, 1.75rem);
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .primary-btn {
+        appearance: none;
+        border: none;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--accent);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .primary-btn:hover,
+      .primary-btn:focus-visible {
+        background: var(--accent-dark);
+        transform: translateY(-1px);
+      }
+
+      main {
+        flex: 1;
+        padding: clamp(1rem, 3vw, 2.5rem);
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .search-box {
+        position: relative;
+        flex: 1 1 280px;
+        max-width: 480px;
+      }
+
+      .search-box input[type="search"] {
+        width: 100%;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border);
+        padding: 0.75rem 1rem 0.75rem 2.75rem;
+        font-size: 0.95rem;
+        background: var(--surface);
+        color: inherit;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .search-box input[type="search"]:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+      }
+
+      .search-box svg {
+        position: absolute;
+        top: 50%;
+        left: 0.9rem;
+        transform: translateY(-50%);
+        width: 1.1rem;
+        height: 1.1rem;
+        stroke: var(--text-muted);
+      }
+
+      .record-count {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      .table-card {
+        background: var(--surface);
+        border-radius: 1rem;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+      }
+
+      thead {
+        background: var(--surface-muted);
+      }
+
+      th,
+      td {
+        padding: 0.85rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+
+      th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+      }
+
+      tbody tr:hover td {
+        background: rgba(37, 99, 235, 0.08);
+      }
+
+      .muted {
+        color: var(--text-muted);
+      }
+
+      .table-scroll {
+        overflow-x: auto;
+      }
+
+      .actions {
+        display: inline-flex;
+        gap: 0.5rem;
+      }
+
+      .ghost-btn {
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        border-radius: 0.5rem;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+      }
+
+      .ghost-btn:hover,
+      .ghost-btn:focus-visible {
+        background: var(--surface-muted);
+        border-color: var(--accent);
+      }
+
+      .ghost-btn.danger {
+        color: var(--danger);
+        border-color: rgba(220, 38, 38, 0.35);
+      }
+
+      .ghost-btn.danger:hover,
+      .ghost-btn.danger:focus-visible {
+        background: rgba(220, 38, 38, 0.08);
+        border-color: var(--danger);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 2.5rem 1rem;
+        color: var(--text-muted);
+        font-size: 0.95rem;
+      }
+
+      .modal,
+      .backdrop {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+      }
+
+      .backdrop {
+        background: rgba(15, 23, 42, 0.35);
+      }
+
+      .modal.hidden,
+      .backdrop.hidden {
+        display: none;
+      }
+
+      .modal-card {
+        background: var(--surface);
+        color: var(--text);
+        border-radius: 1rem;
+        width: min(640px, 92vw);
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 55px rgba(15, 23, 42, 0.22);
+        padding: clamp(1.25rem, 3vw, 2rem);
+        position: relative;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+      }
+
+      .modal-header h2 {
+        margin: 0;
+        font-size: 1.35rem;
+      }
+
+      .close-btn {
+        border: none;
+        background: transparent;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text-muted);
+        padding: 0.25rem;
+      }
+
+      .close-btn:hover,
+      .close-btn:focus-visible {
+        color: var(--text);
+      }
+
+      form {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .form-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      label span {
+        display: block;
+        margin-bottom: 0.4rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      input,
+      select {
+        width: 100%;
+        border-radius: 0.65rem;
+        border: 1px solid var(--border);
+        padding: 0.65rem 0.75rem;
+        font-size: 0.95rem;
+        background: var(--surface);
+        color: inherit;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      input:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+      }
+
+      .secondary-btn {
+        border: 1px solid var(--border);
+        background: transparent;
+        border-radius: 0.65rem;
+        padding: 0.65rem 1.1rem;
+        font-size: 0.95rem;
+        cursor: pointer;
+        color: var(--text);
+      }
+
+      .secondary-btn:hover,
+      .secondary-btn:focus-visible {
+        background: var(--surface-muted);
+      }
+
+      .danger-btn {
+        background: var(--danger);
+        color: #fff;
+        border: none;
+        border-radius: 0.65rem;
+        padding: 0.65rem 1.25rem;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+
+      .danger-btn:hover,
+      .danger-btn:focus-visible {
+        background: var(--danger-dark);
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        padding: 0.85rem 1.25rem;
+        border-radius: 0.75rem;
+        background: var(--success);
+        color: #fff;
+        font-weight: 600;
+        box-shadow: 0 12px 30px rgba(4, 120, 87, 0.35);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(20px);
+        transition: opacity 0.25s ease, transform 0.25s ease, background 0.25s ease;
+        z-index: 120;
+      }
+
+      .toast.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .toast[data-variant="error"] {
+        background: var(--danger);
+        box-shadow: 0 12px 30px rgba(220, 38, 38, 0.35);
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      @media (max-width: 768px) {
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .toolbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .record-count {
+          align-self: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1>Property Portfolio</h1>
+          <p class="muted">Monitor, filter, and manage affordable housing assets.</p>
+        </div>
+        <button id="add-property" class="primary-btn" type="button">
+          <span aria-hidden="true">＋</span>
+          New Property
+        </button>
+      </header>
+      <main>
+        <section class="toolbar" aria-label="Property tools">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" fill="none" stroke-width="2"></circle>
+              <line
+                x1="16.65"
+                y1="16.65"
+                x2="21"
+                y2="21"
+                stroke-width="2"
+                stroke-linecap="round"
+              ></line>
+            </svg>
+            <label class="sr-only" for="search">Search properties</label>
+            <input id="search" type="search" placeholder="Search by name, code, city, or manager" />
+          </div>
+          <div class="record-count" id="record-count" aria-live="polite"></div>
+        </section>
+        <section class="table-card" aria-live="polite">
+          <div class="table-scroll">
+            <table id="property-table">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Code</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Address</th>
+                  <th scope="col">City</th>
+                  <th scope="col">State</th>
+                  <th scope="col">Postal Code</th>
+                  <th scope="col">Total Units</th>
+                  <th scope="col">Manager</th>
+                  <th scope="col" aria-label="Row actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="modal-backdrop" class="backdrop hidden" aria-hidden="true"></div>
+
+    <div
+      id="property-modal"
+      class="modal hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 id="modal-title">New Property</h2>
+          <button class="close-btn" type="button" data-close-modal aria-label="Close">
+            ×
+          </button>
+        </div>
+        <form id="property-form">
+          <div class="form-grid">
+            <label>
+              <span>Name</span>
+              <input name="name" type="text" required maxlength="100" autocomplete="off" />
+            </label>
+            <label>
+              <span>Code</span>
+              <input name="code" type="text" required maxlength="20" autocomplete="off" />
+            </label>
+            <label>
+              <span>Type</span>
+              <select name="type">
+                <option value="Affordable">Affordable</option>
+                <option value="Market Rate">Market Rate</option>
+                <option value="Mixed Finance">Mixed Finance</option>
+              </select>
+            </label>
+            <label>
+              <span>Street Address</span>
+              <input
+                name="address_line1"
+                type="text"
+                required
+                maxlength="120"
+                autocomplete="off"
+              />
+            </label>
+            <label>
+              <span>City</span>
+              <input name="city" type="text" required maxlength="80" autocomplete="off" />
+            </label>
+            <label>
+              <span>State</span>
+              <input
+                name="state"
+                type="text"
+                required
+                maxlength="2"
+                pattern="[A-Za-z]{2}"
+                title="Use the two-letter state abbreviation"
+                autocomplete="off"
+              />
+            </label>
+            <label>
+              <span>Postal Code</span>
+              <input
+                name="postal_code"
+                type="text"
+                required
+                maxlength="10"
+                autocomplete="off"
+              />
+            </label>
+            <label>
+              <span>Total Units</span>
+              <input name="total_units" type="number" min="0" max="20000" step="1" />
+            </label>
+            <label>
+              <span>Property Manager</span>
+              <input name="property_manager" type="text" maxlength="100" autocomplete="off" />
+            </label>
+          </div>
+          <div class="modal-actions">
+            <button class="secondary-btn" type="button" data-close-modal>Cancel</button>
+            <button class="primary-btn" type="submit" data-submit>
+              Save Property
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div
+      id="delete-modal"
+      class="modal hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-title"
+    >
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 id="delete-title">Delete property</h2>
+          <button class="close-btn" type="button" data-close-modal aria-label="Close">
+            ×
+          </button>
+        </div>
+        <p id="delete-message" class="muted"></p>
+        <div class="modal-actions">
+          <button id="cancel-delete" class="secondary-btn" type="button">Cancel</button>
+          <button id="confirm-delete" class="danger-btn" type="button">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://127.0.0.1:8000";
+      const state = {
+        properties: [],
+        search: "",
+        editingId: null,
+        deleteId: null,
+      };
+
+      const elements = {
+        tableBody: document.querySelector("#property-table tbody"),
+        recordCount: document.getElementById("record-count"),
+        search: document.getElementById("search"),
+        addButton: document.getElementById("add-property"),
+        propertyModal: document.getElementById("property-modal"),
+        propertyForm: document.getElementById("property-form"),
+        modalTitle: document.getElementById("modal-title"),
+        submitButton: document.querySelector("#property-form [data-submit]"),
+        deleteModal: document.getElementById("delete-modal"),
+        deleteMessage: document.getElementById("delete-message"),
+        confirmDelete: document.getElementById("confirm-delete"),
+        cancelDelete: document.getElementById("cancel-delete"),
+        backdrop: document.getElementById("modal-backdrop"),
+        toast: document.getElementById("toast"),
+      };
+
+      let toastTimer = null;
+
+      function showToast(message, variant = "success") {
+        if (!elements.toast) return;
+        elements.toast.textContent = message;
+        elements.toast.dataset.variant = variant;
+        elements.toast.classList.add("visible");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          elements.toast.classList.remove("visible");
+        }, 3200);
+      }
+
+      function hideToast() {
+        if (!elements.toast) return;
+        elements.toast.classList.remove("visible");
+        clearTimeout(toastTimer);
+      }
+
+      function openModal(modal) {
+        modal.classList.remove("hidden");
+        elements.backdrop.classList.remove("hidden");
+        document.body.classList.add("modal-open");
+      }
+
+      function closeModal(modal) {
+        modal.classList.add("hidden");
+        if (modal === elements.propertyModal) {
+          state.editingId = null;
+        }
+        if (modal === elements.deleteModal) {
+          state.deleteId = null;
+        }
+        const anyOpen = Array.from(document.querySelectorAll(".modal"))
+          .filter((node) => !node.classList.contains("hidden"))
+          .length;
+        if (anyOpen === 0) {
+          elements.backdrop.classList.add("hidden");
+          document.body.classList.remove("modal-open");
+        }
+      }
+
+      function closeAllModals() {
+        document.querySelectorAll(".modal").forEach((modal) => modal.classList.add("hidden"));
+        elements.backdrop.classList.add("hidden");
+        document.body.classList.remove("modal-open");
+        state.editingId = null;
+        state.deleteId = null;
+      }
+
+      async function loadProperties() {
+        try {
+          const response = await fetch(`${API_BASE}/properties/`);
+          if (!response.ok) {
+            throw new Error(`Unable to load properties (${response.status})`);
+          }
+          const data = await response.json();
+          state.properties = Array.isArray(data) ? data : [];
+          renderProperties();
+        } catch (error) {
+          console.error(error);
+          renderProperties();
+          showToast(error.message || "Failed to load properties", "error");
+        }
+      }
+
+      function renderProperties() {
+        const term = state.search.trim().toLowerCase();
+        const results = term
+          ? state.properties.filter((property) => {
+              const haystack = [
+                property.name,
+                property.code,
+                property.city,
+                property.state,
+                property.property_manager,
+              ]
+                .map((value) => (value || "").toString().toLowerCase())
+                .join(" ");
+              return haystack.includes(term);
+            })
+          : state.properties.slice();
+
+        elements.tableBody.innerHTML = "";
+        if (results.length === 0) {
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.colSpan = 10;
+          cell.className = "empty-state";
+          cell.textContent = term
+            ? "No properties match your search keywords."
+            : "No properties found. Add your first property to get started.";
+          row.appendChild(cell);
+          elements.tableBody.appendChild(row);
+        } else {
+          results.forEach((property) => {
+            const row = document.createElement("tr");
+
+            const cells = [
+              property.name,
+              property.code,
+              property.type,
+              property.address_line1,
+              property.city,
+              property.state,
+              property.postal_code,
+              property.total_units ?? "—",
+              property.property_manager || "—",
+            ];
+
+            cells.forEach((value) => {
+              const cell = document.createElement("td");
+              cell.textContent = value ?? "";
+              row.appendChild(cell);
+            });
+
+            const actionsCell = document.createElement("td");
+            const actionsWrapper = document.createElement("div");
+            actionsWrapper.className = "actions";
+
+            const editButton = document.createElement("button");
+            editButton.type = "button";
+            editButton.className = "ghost-btn";
+            editButton.textContent = "Edit";
+            editButton.addEventListener("click", () => {
+              openPropertyModal(property);
+            });
+
+            const deleteButton = document.createElement("button");
+            deleteButton.type = "button";
+            deleteButton.className = "ghost-btn danger";
+            deleteButton.textContent = "Delete";
+            deleteButton.addEventListener("click", () => {
+              openDeleteModal(property);
+            });
+
+            actionsWrapper.append(editButton, deleteButton);
+            actionsCell.appendChild(actionsWrapper);
+            row.appendChild(actionsCell);
+
+            elements.tableBody.appendChild(row);
+          });
+        }
+
+        elements.recordCount.textContent = `${results.length} record${
+          results.length === 1 ? "" : "s"
+        }`;
+      }
+
+      function openPropertyModal(property) {
+        state.editingId = property ? property.id : null;
+        elements.modalTitle.textContent = property ? "Edit Property" : "New Property";
+        elements.submitButton.textContent = property ? "Update Property" : "Save Property";
+        elements.propertyForm.reset();
+
+        if (property) {
+          const form = elements.propertyForm.elements;
+          form.namedItem("name").value = property.name || "";
+          form.namedItem("code").value = property.code || "";
+          form.namedItem("type").value = property.type || "Affordable";
+          form.namedItem("address_line1").value = property.address_line1 || "";
+          form.namedItem("city").value = property.city || "";
+          form.namedItem("state").value = property.state || "";
+          form.namedItem("postal_code").value = property.postal_code || "";
+          form.namedItem("total_units").value = property.total_units ?? "";
+          form.namedItem("property_manager").value = property.property_manager || "";
+        }
+
+        openModal(elements.propertyModal);
+        const nameField = elements.propertyForm.elements.namedItem("name");
+        if (nameField instanceof HTMLElement) {
+          queueMicrotask(() => nameField.focus());
+        }
+      }
+
+      function openDeleteModal(property) {
+        state.deleteId = property.id;
+        elements.deleteMessage.textContent = `Are you sure you want to delete ${
+          property.name
+        } (${property.code})? This action cannot be undone.`;
+        openModal(elements.deleteModal);
+        elements.confirmDelete.focus();
+      }
+
+      async function handleSubmit(event) {
+        event.preventDefault();
+        const formData = new FormData(elements.propertyForm);
+
+        const payload = {
+          name: String(formData.get("name") ?? "").trim(),
+          code: String(formData.get("code") ?? "").trim(),
+          type: String(formData.get("type") ?? "").trim() || "Affordable",
+          address_line1: String(formData.get("address_line1") ?? "").trim(),
+          city: String(formData.get("city") ?? "").trim(),
+          state: String(formData.get("state") ?? "").trim().toUpperCase(),
+          postal_code: String(formData.get("postal_code") ?? "").trim(),
+          total_units: null,
+          property_manager: null,
+        };
+
+        const totalUnitsRaw = String(formData.get("total_units") ?? "").trim();
+        if (totalUnitsRaw !== "") {
+          const parsedUnits = Number(totalUnitsRaw);
+          if (Number.isNaN(parsedUnits)) {
+            showToast("Total units must be a valid number", "error");
+            return;
+          }
+          payload.total_units = parsedUnits;
+        }
+
+        const managerRaw = String(formData.get("property_manager") ?? "").trim();
+        if (managerRaw !== "") {
+          payload.property_manager = managerRaw;
+        }
+
+        const isEdit = Boolean(state.editingId);
+        const url = isEdit
+          ? `${API_BASE}/properties/${state.editingId}`
+          : `${API_BASE}/properties/`;
+        const method = isEdit ? "PUT" : "POST";
+
+        const button = elements.submitButton;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = isEdit ? "Updating…" : "Saving…";
+
+        try {
+          const response = await fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            let detail = "Unable to save property";
+            try {
+              const errorData = await response.json();
+              if (errorData && errorData.detail) {
+                detail = errorData.detail;
+              }
+            } catch (jsonError) {
+              console.warn("Failed to parse error response", jsonError);
+            }
+            throw new Error(detail);
+          }
+
+          await loadProperties();
+          closeModal(elements.propertyModal);
+          showToast(isEdit ? "Property updated" : "Property created");
+        } catch (error) {
+          console.error(error);
+          showToast(error.message || "Unable to save property", "error");
+        } finally {
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      }
+
+      async function handleDelete() {
+        if (!state.deleteId) return;
+        const deleteId = state.deleteId;
+        elements.confirmDelete.disabled = true;
+        elements.confirmDelete.textContent = "Deleting…";
+
+        try {
+          const response = await fetch(`${API_BASE}/properties/${deleteId}`, {
+            method: "DELETE",
+          });
+
+          if (!response.ok) {
+            let detail = "Unable to delete property";
+            try {
+              const errorData = await response.json();
+              if (errorData && errorData.detail) {
+                detail = errorData.detail;
+              }
+            } catch (jsonError) {
+              console.warn("Failed to parse delete error", jsonError);
+            }
+            throw new Error(detail);
+          }
+
+          closeModal(elements.deleteModal);
+          state.deleteId = null;
+          await loadProperties();
+          showToast("Property deleted");
+        } catch (error) {
+          console.error(error);
+          showToast(error.message || "Unable to delete property", "error");
+        } finally {
+          elements.confirmDelete.disabled = false;
+          elements.confirmDelete.textContent = "Delete";
+        }
+      }
+
+      elements.search.addEventListener("input", (event) => {
+        state.search = event.target.value || "";
+        renderProperties();
+      });
+
+      elements.addButton.addEventListener("click", () => {
+        state.editingId = null;
+        openPropertyModal(null);
+      });
+
+      elements.propertyForm.addEventListener("submit", handleSubmit);
+
+      elements.confirmDelete.addEventListener("click", handleDelete);
+      elements.cancelDelete.addEventListener("click", () => {
+        closeModal(elements.deleteModal);
+        state.deleteId = null;
+      });
+
+      document.querySelectorAll("[data-close-modal]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const modal = button.closest(".modal");
+          if (modal) {
+            closeModal(modal);
+          }
+          hideToast();
+        });
+      });
+
+      elements.backdrop.addEventListener("click", closeAllModals);
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          closeAllModals();
+        }
+      });
+
+      window.addEventListener("focus", () => {
+        if (elements.toast.classList.contains("visible")) {
+          hideToast();
+        }
+      });
+
+      loadProperties();
+    </script>
+  </body>
+</html>

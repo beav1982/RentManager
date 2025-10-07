@@ -31,6 +31,18 @@ class PropertyRead(PropertyBase):
         orm_mode = True
 
 
+class PropertyUpdate(BaseModel):
+    name: Optional[str] = None
+    code: Optional[str] = None
+    type: Optional[str] = None
+    address_line1: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    postal_code: Optional[str] = None
+    total_units: Optional[int] = None
+    property_manager: Optional[str] = None
+
+
 class UnitBase(BaseModel):
     property_id: int
     number: str

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Iterable, List, Optional
+from typing import Any, Iterable, List, Optional
 
 from sqlmodel import SQLModel, Session, select
 
@@ -19,6 +19,22 @@ def create_property(session: Session, property_in: models.Property) -> models.Pr
 
 def list_properties(session: Session) -> List[models.Property]:
     return session.exec(select(models.Property)).all()
+
+
+def update_property(
+    session: Session, property_: models.Property, updates: dict[str, Any]
+) -> models.Property:
+    for field, value in updates.items():
+        setattr(property_, field, value)
+    session.add(property_)
+    session.commit()
+    session.refresh(property_)
+    return property_
+
+
+def delete_property(session: Session, property_: models.Property) -> None:
+    session.delete(property_)
+    session.commit()
 
 
 def create_unit(session: Session, unit_in: models.Unit) -> models.Unit:
